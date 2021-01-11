@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <!-- download jQuery from Google CDN -->
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+        
+        <!-- download Google maps api, apply for a Key (you won’t be charged unless done lots of maps) -->
+        <script 
+            src="https://maps.googleapis.com/maps/api/js?key=API_KEY" async defer>
+        </script>
+  
+        <script type="text/javascript">
+            function runjQuery()
+            {
+                //read input search text
+                var searchInput = $("[name='searchTxtBx']").val();
+                
+                //basic validation: user’s input not blank (empty)
+                if (searchInput !== "")
+                {
+                    //pass searchInput to a program at the server which will  access the database and search it
+                    $.ajax(
+                    {
+                        //set up parameters
+                        url:        "searchdb.php",
+                        data:       "searchKey=" + searchInput,
+                        success:    function(serverdata)
+                        {
+                            //show the placeholders
+                            $("#showresults").show();
+                            
+                            //display serverdata in placeholder: showselect
+                            $("#showselect").html(serverdata);
+                        }
+                    });
+                }
+                else {
+                   //clear up the placeholders
+                   $("#showresults").html("");
+                   $("#showselect").html("");
+                   $("#showcollege").html("");
+                   $("#showmap").html("");
+                   
+                   //reset the focus to the text box
+                   $("[name='searchTxtBx']").focus();
+                }
+            }//end of function runjQuery()
+            
+            function getcollegeinfo()
+            {
+                //get selected value
+                var selectedValue = $("#collegeList").val();
+                
+                if (selectedValue != "")
+                {
+                    //variable selectedValue is a string with values separated by comma
+                    var valueArray = selectedValue.split(",");
+                    var website = valueArray[0];
+                    var address = valueArray[1];
+                    var city = valueArray[2];
+                    var state = valueArray[3];
+                    var zipcode = valueArray[4];
+                    var latitude = valueArray[5];
+                    var longitude = valueArray[6];
+                    var phone = valueArray[7];
+
+                    //display this info in placeholder showcollege
+                    $("#showcollege").html("Address: " + address + "<br/>"+
+                                           "City: " + city + "<br/>" +
+                                           "State: " + state + "<br/>" +
+                                           "Zip Code: " + zipcode + "<br/>" +
+                                           "Phone: " + phone + "<br/>" +
+                                           "URL: <a href='" + website + "'>" + website + "</a>");
+
+                    //call a function that maps the selected college
+                    //it needs the college name, latitude, and longitude
+                    var optionText = $("#collegeList option:selected").text();
+                    var collegeName = optionText.split(",")[0];
+
+                   //call function
+                   mapcollege(collegeName,latitude,longitude);                    
+                }
+                else
+                {
+                    $("#showcollege").html("");
+                }
+            }//end of function getcollegeinfo()
+            
+            function mapcollege(cname,lati,longi)
+            {
+                //create a map and place it in the placeholder showmap
+                var newmap = new google.maps.Map(document.getElementById("showmap"));
+                
+                //set the type of map: ROADMAP
+                newmap.setMapTypeId(google.maps.MapTypeId.ROADMAP);
+                
+                //set the boundaries around the coordinates
+                var bounds = new google.maps.LatLngBounds();
+                
+                //set the coordinates of the selected college
+                var collegecoords = new google.maps.LatLng(lati,longi);
+                
+                //create a marker
+                var marker = new google.maps.Marker(
+                {
+                   position:    collegecoords,
+                   label:       cname,
+                   map:         newmap
+                });
+                
+                //set the Marker location
+                var loc = new google.maps.LatLng(marker.position.lat(), marker.position.lng());
+                bounds.extend(loc);
+                
+                //center map around college's coordinates
+                newmap.setCenter(collegecoords);
+                
+                //set the zoom
+                newmap.setZoom(12);
+                
+                //autocenter
+                newmap.panToBounds(bounds);
+            }
+        </script>
+    </head>
+    <body>
+        <h2>CUNY Colleges Near Me</h2>
+        <p></p>
+        Search: <input type="text" name="searchTxtBx" size="40" autofocus onkeyup="runjQuery()"/>
+        <p></p>
+        <div id="showresults" style="width:700px;border:1px solid black;verflow:hidden;display:none">
+            <div id="showselect" style="float:left;width:350px;border:1px solid gray;"></div>
+            <div id="showcollege" style="margin-left:352px;border:none"></div>    
+        </div><p></p>
+        <div id="showmap" style="width:100%; height:500px"></div>
+    </body>
+</html>
